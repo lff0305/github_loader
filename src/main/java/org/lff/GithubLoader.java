@@ -80,6 +80,11 @@ public class GithubLoader {
                 JSONObject item = list.getJSONObject(i);
                 String name = item.getString("name");
                 String type = item.getString("type");
+
+                String fileName = Utility.removeTailing(config.getOutput()) + File.separator +
+                        Utility.removeTailing((baseDir) +
+                                File.separator + name);
+
                 if (type.equals("file")) {
                     String download_url = item.getString("download_url");
                     String content = download(download_url, config.getToken());
@@ -87,15 +92,10 @@ public class GithubLoader {
                         logger.error("Failed to download from " + download_url);
                         System.exit(1);
                     }
-                    String fileName = Utility.removeTailing(config.getOutput()) + File.separator +
-                            Utility.removeTailing((baseDir) +
-                                    File.separator + name);
                     Utility.writeFile(fileName, content);
                 }
                 if (type.equals("dir")){
-                    Utility.mkdir(Utility.removeTailing(config.getOutput()) + File.separator +
-                            Utility.removeTailing((baseDir) +
-                            File.separator + name));
+                    Utility.mkdir(fileName);
                     Config newConfig = config.subDir(name);
                     processDir(newConfig, depth + 1, baseDir + "/" + name);
                 }
