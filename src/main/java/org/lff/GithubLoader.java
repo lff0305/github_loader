@@ -59,6 +59,7 @@ public class GithubLoader {
         try {
             commandLine = parser.parse(options, args);
             Config config = Config.build(commandLine);
+            createOutputDir(config);
             if (config.isFileMode()) {
                 process(config);
             } else {
@@ -66,6 +67,17 @@ public class GithubLoader {
             }
         }catch(Exception e){
             e.printStackTrace();
+        }
+    }
+
+    private static void createOutputDir(Config config) {
+        if (config.isCreateOutputDir()) {
+            if (!Utility.mkdir(config.getOutputDir())) {
+                logger.error("Failed to create output dir");
+                System.exit(1);
+            }
+        } else {
+            logger.info("No need to create output dir " + config.getOutputDir());
         }
     }
 
@@ -81,7 +93,7 @@ public class GithubLoader {
                 String name = item.getString("name");
                 String type = item.getString("type");
 
-                String fileName = Utility.removeTailing(config.getOutput()) + File.separator +
+                String fileName = Utility.removeTailing(config.getOutputDir()) + File.separator +
                         Utility.removeTailing((baseDir) +
                                 File.separator + name);
 
@@ -116,7 +128,7 @@ public class GithubLoader {
                 logger.error("Failed to download from " + download_url);
                 System.exit(1);
             }
-            Utility.writeFile(config.getOutput() + "/" + config.getFile(), content);
+            Utility.writeFile(config.getOutputDir() + "/" + config.getFile(), content);
         }
     }
 

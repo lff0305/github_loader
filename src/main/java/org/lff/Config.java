@@ -40,7 +40,16 @@ public class Config {
         String output = commandLine.getOptionValue("output");
         logger.info("output = " + output);
         config.outputDir = output;
+
+        String create = commandLine.getOptionValue("create", "false");
+        logger.info("Create outputDir = " + output);
+        config.createOutputDir = create.equals("true") || create.equals("1");
+
         return config;
+    }
+
+    public boolean isCreateOutputDir() {
+        return this.createOutputDir;
     }
 
     public Config subDir(String name) {
@@ -115,7 +124,7 @@ public class Config {
         return this.token != null && !this.token.isEmpty();
     }
 
-    public String getOutput() {
+    public String getOutputDir() {
         return this.outputDir;
     }
 
