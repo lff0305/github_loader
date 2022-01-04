@@ -7,9 +7,9 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.util.Base64;
 
 import org.apache.commons.cli.*;
+import org.json.JSONObject;
 
 public class GithubLoader {
 
@@ -35,6 +35,10 @@ public class GithubLoader {
         dir.setRequired(false);
         options.addOption(dir);
 
+        Option branch = new Option("b", "branch", true, "branch");
+        branch.setRequired(false);
+        options.addOption(branch);
+
         Option file = new Option("f", "file", true, "single file to load");
         file.setRequired(false);
         options.addOption(file);
@@ -59,14 +63,61 @@ public class GithubLoader {
     }
 
     private static void process(Config config) {
-        if (config.isFileMode()) {
-            processFile(config);
+        String body = processFile(config);
+        if (Utility.isJsonArray(body)) {
+
+        }
+        if (Utility.isJsonObject(body)) {
+            JSONObject o = new JSONObject(body);
+            String download_url = o.getString("download_url");
+            String content = download(download_url, config.getToken());
+            if (content == null) {
+                logger.error("Failed to download from " + download_url);
+                System.exit(1);
+            }
+            Utility.writeFile(config.getOutput() + "/" + config.getFile(), content);
         }
     }
 
-    private static void processFile(Config config) {
-        String url = config.getEndpoint() + "/raw" + config.getFile();
-        logger.info("Load file " + url);
+    private static String download(String url, String token) {
+        logger.info("Downloading " + url);
+        HttpRequest request = HttpRequest.newBuilder()
+                .GET()
+                .uri(URI.create(url))
+                .header("Authorization", Utility.basicAuth("user", token))
+                .setHeader("User-Agent", "Java 11 HttpClient Bot") // add request header
+                .build();
+        HttpResponse<String> response = null;
+        try {
+            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            logger.info("Response is " + response.statusCode());
+            return response.body();
+        } catch (IOException e) {
+            logger.error("Failed to load config", e);
+            if (response != null) {
+                logger.error("Response is " + response.statusCode() + " / " + response.body());
+            } else {
+                logger.error("Response is null");
+            }
+        } catch (InterruptedException e) {
+            return null;
+        } finally {
+        }
+        return null;
+    }
+
+    private static String processFile(Config config) {
+
+        String tenant = config.getTenant();
+        logger.info("Tenant = " + tenant);
+        String path = config.getPath();
+        logger.info("Path = " + path);
+        String file = config.getFile();
+        logger.info("File = " + file);
+
+        String url = config.getEndpoint() + "/repos/" + tenant + "/contents/" + path + "/" + file + "?ref=" + config.getBranch();
+        logger.info("url = " + url);
+
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .GET()
                 .uri(URI.create(url))
@@ -77,8 +128,9 @@ public class GithubLoader {
         HttpResponse<String> response = null;
         try {
             response = httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString());
-            logger.info("Response is " + response.statusCode() + response.body());
+            logger.info("Response is " + response.statusCode());
             String body = response.body();
+            return body;
         } catch (IOException e) {
             logger.error("Failed to load config", e);
             if (response != null) {
@@ -86,11 +138,12 @@ public class GithubLoader {
             } else {
                 logger.error("Response is null");
             }
+            return null;
         } catch (InterruptedException e) {
-            return;
+            return null;
         } finally {
+
         }
-        return;
     }
 
 
