@@ -50,7 +50,7 @@ public class GithubLoader {
         output.setRequired(true);
         options.addOption(output);
 
-        Option create = new Option(null, "create", false, "create output directory if not exists");
+        Option create = new Option("c", "create", false, "create output directory if not exists");
         create.setRequired(false);
         options.addOption(create);
 

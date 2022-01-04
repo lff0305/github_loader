@@ -41,9 +41,8 @@ public class Config {
         logger.info("output = " + output);
         config.outputDir = output;
 
-        String create = commandLine.getOptionValue("create", "false");
-        logger.info("Create outputDir = " + output);
-        config.createOutputDir = create.equals("true") || create.equals("1");
+        config.createOutputDir = commandLine.hasOption("create");
+        logger.info("Create output dir: " + config.createOutputDir);
 
         return config;
     }
