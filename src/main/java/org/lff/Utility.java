@@ -4,9 +4,11 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
+import java.nio.file.Files;
 import java.util.Base64;
 
 public class Utility {
@@ -91,6 +93,20 @@ public class Utility {
             bw.close();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    public static boolean mkdir(String dir) {
+        logger.info("Making dir " + dir);
+        try {
+            File f = new File(dir);
+            if (f.exists()) {
+                return f.isDirectory();
+            }
+            return f.mkdir();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
     }
 }

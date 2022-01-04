@@ -15,6 +15,7 @@ public class Config {
     private String outputDir;
     private boolean createOutputDir;
     private String branch;
+    private int maxDepth = 3;
 
 
     public static Config build(CommandLine commandLine) {
@@ -39,6 +40,17 @@ public class Config {
         String output = commandLine.getOptionValue("output");
         logger.info("output = " + output);
         config.outputDir = output;
+        return config;
+    }
+
+    public Config subDir(String name) {
+        Config config = new Config();
+        config.dir = this.dir + "/" + name;
+        config.token = token;
+        config.endpoint = endpoint;
+        config.branch = branch;
+        config.maxDepth = maxDepth;
+        config.outputDir = outputDir;
         return config;
     }
 
@@ -103,7 +115,11 @@ public class Config {
         return this.token != null && !this.token.isEmpty();
     }
 
-    public Object getOutput() {
+    public String getOutput() {
         return this.outputDir;
+    }
+
+    public int getMaxDepth() {
+        return maxDepth;
     }
 }

@@ -1,5 +1,6 @@
 package org.lff;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
@@ -9,12 +10,14 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 
 import org.apache.commons.cli.*;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class GithubLoader {
 
 
     private static final HttpClient httpClient = HttpClient.newBuilder()
+            .followRedirects(HttpClient.Redirect.NORMAL)
             .version(HttpClient.Version.HTTP_1_1)
             .connectTimeout(Duration.ofSeconds(10))
             .build();
@@ -56,14 +59,52 @@ public class GithubLoader {
         try {
             commandLine = parser.parse(options, args);
             Config config = Config.build(commandLine);
-            process(config);
+            if (config.isFileMode()) {
+                process(config);
+            } else {
+                processDir(config, 0, "");
+            }
         }catch(Exception e){
             e.printStackTrace();
         }
     }
 
+    private static void processDir(Config config, int depth, String baseDir) {
+        if (depth > config.getMaxDepth()) {
+            return;
+        }
+        String body = getFileMeta(config);
+        if (Utility.isJsonArray(body)) {
+            JSONArray list = new JSONArray(body);
+            for (int i=0; i<list.length(); i++) {
+                JSONObject item = list.getJSONObject(i);
+                String name = item.getString("name");
+                String type = item.getString("type");
+                if (type.equals("file")) {
+                    String download_url = item.getString("download_url");
+                    String content = download(download_url, config.getToken());
+                    if (content == null) {
+                        logger.error("Failed to download from " + download_url);
+                        System.exit(1);
+                    }
+                    String fileName = Utility.removeTailing(config.getOutput()) + File.separator +
+                            Utility.removeTailing((baseDir) +
+                                    File.separator + name);
+                    Utility.writeFile(fileName, content);
+                }
+                if (type.equals("dir")){
+                    Utility.mkdir(Utility.removeTailing(config.getOutput()) + File.separator +
+                            Utility.removeTailing((baseDir) +
+                            File.separator + name));
+                    Config newConfig = config.subDir(name);
+                    processDir(newConfig, depth + 1, baseDir + "/" + name);
+                }
+            }
+        }
+    }
+
     private static void process(Config config) {
-        String body = processFile(config);
+        String body = getFileMeta(config);
         if (Utility.isJsonArray(body)) {
 
         }
@@ -106,7 +147,7 @@ public class GithubLoader {
         return null;
     }
 
-    private static String processFile(Config config) {
+    private static String getFileMeta(Config config) {
 
         String tenant = config.getTenant();
         logger.info("Tenant = " + tenant);
@@ -121,6 +162,7 @@ public class GithubLoader {
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .GET()
                 .uri(URI.create(url))
+                .setHeader("Accept", "application/vnd.github.v3+json")
                 .setHeader("User-Agent", "Java 11 HttpClient Bot");
         if (config.isAuth()) {
             builder.header("Authorization", Utility.basicAuth("user", config.getToken()));
@@ -128,7 +170,7 @@ public class GithubLoader {
         HttpResponse<String> response = null;
         try {
             response = httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString());
-            logger.info("Response is " + response.statusCode());
+            logger.info("Response is " + response.statusCode() + " " + response.body());
             String body = response.body();
             return body;
         } catch (IOException e) {
