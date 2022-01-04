@@ -101,9 +101,12 @@ public class Utility {
         try {
             File f = new File(dir);
             if (f.exists()) {
+                logger.info(dir + " already exists and it is a directory ? " + f.isDirectory());
                 return f.isDirectory();
             }
-            return f.mkdir();
+            boolean result = f.mkdir();
+            logger.info("Create dir " + dir + " = " + result);
+            return result;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
