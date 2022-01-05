@@ -59,6 +59,7 @@ public class Config {
         config.branch = branch;
         config.maxDepth = maxDepth;
         config.outputDir = outputDir;
+        config.createOutputDir = createOutputDir;
         return config;
     }
 

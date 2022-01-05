@@ -8,12 +8,23 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
-import java.nio.file.Files;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.Base64;
 
 public class Utility {
 
     private static Logger logger = Logger.getLogger(MethodHandles.lookup().lookupClass());
+
+
+    private static final HttpClient httpClient = HttpClient.newBuilder()
+            .followRedirects(HttpClient.Redirect.NORMAL)
+            .version(HttpClient.Version.HTTP_1_1)
+            .connectTimeout(Duration.ofSeconds(10))
+            .build();
 
     public static String basicAuth(String username, String password) {
         return "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes());
@@ -111,5 +122,73 @@ public class Utility {
             e.printStackTrace();
             return false;
         }
+    }
+
+    public static String getFileMeta(Config config) {
+
+        String tenant = config.getTenant();
+        logger.info("Tenant = " + tenant);
+        String path = config.getPath();
+        logger.info("Path = " + path);
+        String file = config.getFile();
+        logger.info("File = " + file);
+
+        String url = config.getEndpoint() + "/repos/" + tenant + "/contents/" + path + "/" + file + "?ref=" + config.getBranch();
+        logger.info("url = " + url);
+
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
+                .GET()
+                .uri(URI.create(url))
+                .setHeader("Accept", "application/vnd.github.v3+json")
+                .setHeader("User-Agent", "Java 11 HttpClient Bot");
+        if (config.isAuth()) {
+            builder.header("Authorization", Utility.basicAuth("user", config.getToken()));
+        }
+        HttpResponse<String> response = null;
+        try {
+            response = httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString());
+            logger.info("Response is " + response.statusCode() + " " + response.body());
+            String body = response.body();
+            return body;
+        } catch (IOException e) {
+            logger.error("Failed to load config", e);
+            if (response != null) {
+                logger.error("Response is " + response.statusCode() + " / " + response.body());
+            } else {
+                logger.error("Response is null");
+            }
+            return null;
+        } catch (InterruptedException e) {
+            return null;
+        } finally {
+
+        }
+    }
+
+    public static String download(String url, String token) {
+        logger.info("Downloading " + url);
+        HttpRequest request = HttpRequest.newBuilder()
+                .GET()
+                .uri(URI.create(url))
+                .header("Authorization", Utility.basicAuth("user", token))
+                .setHeader("User-Agent", "Java 11 HttpClient Bot") // add request header
+                .build();
+        HttpResponse<String> response = null;
+        try {
+            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            logger.info("Response is " + response.statusCode());
+            return response.body();
+        } catch (IOException e) {
+            logger.error("Failed to load config", e);
+            if (response != null) {
+                logger.error("Response is " + response.statusCode() + " / " + response.body());
+            } else {
+                logger.error("Response is null");
+            }
+        } catch (InterruptedException e) {
+            return null;
+        } finally {
+        }
+        return null;
     }
 }
