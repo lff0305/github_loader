@@ -30,7 +30,7 @@ public class FileProcessor implements Processor {
         if (Utility.isJsonObject(body)) {
             JSONObject o = new JSONObject(body);
             String download_url = o.getString("download_url");
-            String content = Utility.download(download_url, config.getToken());
+            byte[] content = Utility.download(download_url, config.getToken());
             if (content == null) {
                 logger.error("Failed to download from " + download_url);
                 System.exit(1);

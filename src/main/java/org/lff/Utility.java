@@ -3,10 +3,7 @@ package org.lff;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -96,10 +93,10 @@ public class Utility {
         }
     }
 
-    public static void writeFile(String file, String content) {
-        logger.info("Writting " + content.length() + " chars to " + file);
+    public static void writeFile(String file, byte[] content) {
+        logger.info("Writting " + content.length + " chars to " + file);
         try {
-            BufferedWriter bw = new BufferedWriter(new FileWriter(file));
+            OutputStream bw = (new FileOutputStream(file));
             bw.write(content);
             bw.close();
         } catch (IOException e) {
@@ -165,7 +162,7 @@ public class Utility {
         }
     }
 
-    public static String download(String url, String token) {
+    public static byte[] download(String url, String token) {
         logger.info("Downloading " + url);
         HttpRequest request = HttpRequest.newBuilder()
                 .GET()
@@ -173,9 +170,9 @@ public class Utility {
                 .header("Authorization", Utility.basicAuth("user", token))
                 .setHeader("User-Agent", "Java 11 HttpClient Bot") // add request header
                 .build();
-        HttpResponse<String> response = null;
+        HttpResponse<byte[]> response = null;
         try {
-            response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
             logger.info("Response is " + response.statusCode());
             return response.body();
         } catch (IOException e) {
