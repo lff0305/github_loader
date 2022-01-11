@@ -47,6 +47,16 @@ public class Config {
         return config;
     }
 
+    public static Config build(String url, String token, String branch, String file) {
+        Config config = new Config();
+        config.endpoint = url;
+        config.token = token;
+        config.branch = branch;
+        config.file = file;
+        config.dir = null;
+        return config;
+    }
+
     public boolean isCreateOutputDir() {
         return this.createOutputDir;
     }

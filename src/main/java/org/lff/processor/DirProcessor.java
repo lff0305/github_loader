@@ -20,7 +20,7 @@ public class DirProcessor implements Processor {
     }
 
     @Override
-    public void process() {
+    public void getFromRemote() {
         processDir(config, 0, "");
     }
 

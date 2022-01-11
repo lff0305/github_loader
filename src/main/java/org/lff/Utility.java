@@ -14,6 +14,8 @@ import java.util.Base64;
 
 public class Utility {
 
+    public static final String MASTER = "master";
+
     private static Logger logger = Logger.getLogger(MethodHandles.lookup().lookupClass());
 
 
@@ -94,7 +96,7 @@ public class Utility {
     }
 
     public static void writeFile(String file, byte[] content) {
-        logger.info("Writting " + content.length + " chars to " + file);
+        logger.info("Writting " + content.length + " bytes to " + file);
         try {
             OutputStream bw = (new FileOutputStream(file));
             bw.write(content);

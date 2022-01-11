@@ -4,12 +4,13 @@ import java.lang.invoke.MethodHandles;
 
 import org.apache.commons.cli.*;
 import org.lff.processor.DirProcessor;
-import org.lff.processor.FileProcessor;
+import org.lff.processor.LocalFileProcessor;
 import org.lff.processor.Processor;
 
 public class GithubLoader {
 
     private static Logger logger = Logger.getLogger(MethodHandles.lookup().lookupClass());
+
 
     public static void main(String[] args) {
 
@@ -21,8 +22,8 @@ public class GithubLoader {
             commandLine = parser.parse(options, args);
             Config config = Config.build(commandLine);
             createOutputDir(config);
-            Processor processor = config.isFileMode() ? new FileProcessor(config) : new DirProcessor(config);
-            processor.process();
+            Processor processor = config.isFileMode() ? new LocalFileProcessor(config) : new DirProcessor(config);
+            processor.getFromRemote();
         }catch(Exception e){
             e.printStackTrace();
         }
